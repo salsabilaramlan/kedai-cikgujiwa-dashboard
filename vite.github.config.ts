@@ -1,0 +1,12 @@
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  root: "github-pages",
+  base: "/kedai-cikgujiwa-dashboard/",
+  plugins: [react()],
+  build: {
+    outDir: "../docs",
+    emptyOutDir: true,
+  },
+});

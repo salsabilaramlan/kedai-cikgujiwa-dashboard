@@ -83,6 +83,15 @@ const colourHex: Record<string, string> = {
 const hex = (c: string) => colourHex[c.trim().toUpperCase()] || "#a4afa9";
 const slots = (name: string) =>
   Math.max(1, Math.min(7, [...name.trim()].length));
+const apiUrl = (path: string) => {
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "salsabilaramlan.github.io"
+  ) {
+    return `https://kedai-cikgujiwa.cikgujiwa.chatgpt.site${path}`;
+  }
+  return path;
+};
 function groupJobs(orders: Order[], kind: "base" | "background" | "letter") {
   const map = new Map<string, Job>();
   for (const o of orders) {
@@ -161,7 +170,7 @@ export default function Home() {
   async function load() {
     setLoading(true);
     try {
-      const r = await fetch("/api/orders", { cache: "no-store" });
+      const r = await fetch(apiUrl("/api/orders"), { cache: "no-store" });
       const d = await r.json();
       if (!r.ok) throw 0;
       setOrders(d.orders || []);
@@ -181,7 +190,7 @@ export default function Home() {
     setOrders((v) =>
       v.map((x) => (x.key === o.key ? { ...x, status: next } : x)),
     );
-    const r = await fetch("/api/orders", {
+    const r = await fetch(apiUrl("/api/orders"), {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ key: o.key, status: next }),
@@ -201,7 +210,7 @@ export default function Home() {
     );
     await Promise.all(
       keys.map((key) =>
-        fetch("/api/orders", {
+        fetch(apiUrl("/api/orders"), {
           method: "PATCH",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ key, status: "Sedang dibuat" }),

@@ -1,5 +1,23 @@
 import { env } from "cloudflare:workers";
 
+const corsHeaders = {
+  "access-control-allow-origin": "https://salsabilaramlan.github.io",
+  "access-control-allow-methods": "GET, PATCH, OPTIONS",
+  "access-control-allow-headers": "content-type",
+  "access-control-max-age": "86400",
+};
+
+function json(data: unknown, init: ResponseInit = {}) {
+  return Response.json(data, {
+    ...init,
+    headers: { ...corsHeaders, ...init.headers },
+  });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 const sheetId="12pkJMTSPvT6VEgHK9Xkjxrmf7g8kxx96geToszeXbbU";
 const tabs=["CLICKER","PHOTO","MAGNET","NAMETAG","KOPI","NFC","KAD PSS"];
 const initialDone:Record<string,number[]>={CLICKER:[2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137],NAMETAG:[2,3]};
@@ -16,5 +34,5 @@ function normalize(tab:string,rows:string[][]){let lastCustomer="";return rows.s
  else if(tab==="NFC"){date=r[0];customer=r[1];name=r[2]||"NFC Tag";details=[r[5],r[6],r[7]].filter(Boolean).join(" · ");amount=money(r[4]);payment=r[3];phone=r[9]||""}
  else {customer=r[1];name=`Kad PSS ${r[1]||""}`.trim();quantity=Number(r[2])||1;amount=money(r[3]);date=r[4];payment=r[5]}
  if(!customer&&!name&&!amount)return null;return{key:`${tab}-${row}`,sheet:tab,row,customer:customer||name||"Pelanggan",name:name||tab,details,quantity,amount,payment,date,phone,status:initialDone[tab]?.includes(row)?"Siap":"Belum dibuat",base,background,letter}}).filter(Boolean) as Item[]}
-export async function GET(){try{await ready();const sets=await Promise.all(tabs.map(async tab=>{const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}&t=${Date.now()}`;const res=await fetch(url,{cf:{cacheTtl:0} as never});if(!res.ok)throw new Error(`Gagal membaca ${tab}`);return normalize(tab,csv(await res.text()))}));const{results}=await env.DB.prepare("SELECT order_key,status FROM sheet_status").all<{order_key:string,status:string}>();const status=new Map(results.map(r=>[r.order_key,r.status]));const orders=sets.flat().map(o=>({...o,status:status.get(o.key)||o.status}));return Response.json({orders,syncedAt:new Date().toISOString(),sheetUrl:`https://docs.google.com/spreadsheets/d/${sheetId}/edit`},{headers:{"cache-control":"no-store"}})}catch(e){return Response.json({error:e instanceof Error?e.message:"Gagal membaca Google Sheet"},{status:500})}}
-export async function PATCH(req:Request){try{await ready();const p=await req.json() as{key?:string;status?:string};if(!p.key||!["Belum dibuat","Sedang dibuat","Siap"].includes(p.status||""))return Response.json({error:"Status tidak sah"},{status:400});await env.DB.prepare("INSERT INTO sheet_status(order_key,status,updated_at) VALUES(?,?,CURRENT_TIMESTAMP) ON CONFLICT(order_key) DO UPDATE SET status=excluded.status,updated_at=CURRENT_TIMESTAMP").bind(p.key,p.status).run();return Response.json({ok:true})}catch(e){return Response.json({error:e instanceof Error?e.message:"Gagal mengemas kini"},{status:500})}}
+export async function GET(){try{await ready();const sets=await Promise.all(tabs.map(async tab=>{const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}&t=${Date.now()}`;const res=await fetch(url,{cf:{cacheTtl:0} as never});if(!res.ok)throw new Error(`Gagal membaca ${tab}`);return normalize(tab,csv(await res.text()))}));const{results}=await env.DB.prepare("SELECT order_key,status FROM sheet_status").all<{order_key:string,status:string}>();const status=new Map(results.map(r=>[r.order_key,r.status]));const orders=sets.flat().map(o=>({...o,status:status.get(o.key)||o.status}));return json({orders,syncedAt:new Date().toISOString(),sheetUrl:`https://docs.google.com/spreadsheets/d/${sheetId}/edit`},{headers:{"cache-control":"no-store"}})}catch(e){return json({error:e instanceof Error?e.message:"Gagal membaca Google Sheet"},{status:500})}}
+export async function PATCH(req:Request){try{await ready();const p=await req.json() as{key?:string;status?:string};if(!p.key||!["Belum dibuat","Sedang dibuat","Siap"].includes(p.status||""))return json({error:"Status tidak sah"},{status:400});await env.DB.prepare("INSERT INTO sheet_status(order_key,status,updated_at) VALUES(?,?,CURRENT_TIMESTAMP) ON CONFLICT(order_key) DO UPDATE SET status=excluded.status,updated_at=CURRENT_TIMESTAMP").bind(p.key,p.status).run();return json({ok:true})}catch(e){return json({error:e instanceof Error?e.message:"Gagal mengemas kini"},{status:500})}}
