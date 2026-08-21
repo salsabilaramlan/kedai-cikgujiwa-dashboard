@@ -209,9 +209,13 @@ export default function Home() {
       ),
     );
   }
+  const activeOrders = useMemo(
+    () => orders.filter((o) => o.status !== "Siap"),
+    [orders],
+  );
   const filtered = useMemo(
     () =>
-      orders.filter(
+      activeOrders.filter(
         (o) =>
           (tab === "Semua" || o.sheet === tab) &&
           (status === "Semua" || o.status === status) &&
@@ -219,7 +223,7 @@ export default function Home() {
             .toLowerCase()
             .includes(query.toLowerCase()),
       ),
-    [orders, tab, status, query],
+    [activeOrders, tab, status, query],
   );
   const counts = {
     all: orders.length,
@@ -283,7 +287,7 @@ export default function Home() {
                 className={tab === "Semua" ? "active" : ""}
                 onClick={() => setTab("Semua")}
               >
-                <span>✦</span> Semua produk <i>{orders.length}</i>
+                <span>✦</span> Semua produk <i>{activeOrders.length}</i>
               </button>
               {tabs.slice(1).map((t) => (
                 <button
@@ -293,7 +297,7 @@ export default function Home() {
                 >
                   <span>{tabIcon[t]}</span>
                   {tabLabel[t]}
-                  <i>{orders.filter((o) => o.sheet === t).length}</i>
+                  <i>{activeOrders.filter((o) => o.sheet === t).length}</i>
                 </button>
               ))}
             </div>
@@ -429,8 +433,8 @@ export default function Home() {
             <section className="orders-panel">
               <div className="orders-head">
                 <div>
-                  <h2>Senarai tempahan</h2>
-                  <p>{filtered.length} order dipaparkan</p>
+                  <h2>Senarai tempahan belum siap</h2>
+                  <p>{filtered.length} order perlu disiapkan</p>
                 </div>
                 <div className="tools">
                   <label>
@@ -448,7 +452,6 @@ export default function Home() {
                     <option>Semua</option>
                     <option>Belum dibuat</option>
                     <option>Sedang dibuat</option>
-                    <option>Siap</option>
                   </select>
                 </div>
               </div>
