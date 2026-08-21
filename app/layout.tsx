@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kedai Cikgujiwa | Tempahan Produk Custom",
-  description: "Tempah clicker nama custom dan produk kreatif daripada Kedai Cikgujiwa.",
+  title: "Order Tracker | Kedai Cikgujiwa",
+  description: "Dashboard peribadi untuk merekod dan menjejak status order Kedai Cikgujiwa.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
